@@ -52,11 +52,14 @@ v_2 = 0.0
 v_3 = 0.0 
 
 # Initial dipole moment 
+
 d =  compute_dipole(x_1, x_2, x_3) 
 t = 0.0 
 count = 0.0
 
 T_MAX = 200     # a good starting value, but experiment 
+
+dipole_zeroes = 0
 
 while t < T_MAX: 
     # compute F12 
@@ -115,13 +118,25 @@ while t < T_MAX:
     v_3 = update_v(v_3, a_3) 
 
     # compute new dipole moment 
-    d =  compute_dipole(x_1, x_2, x_3) 
+    new_dipole =  compute_dipole(x_1, x_2, x_3) 
+
+    if d < 0 and new_dipole > 0 or d > 0 and new_dipole < 0:
+        dipole_zeroes += 1
+        if dipole_zeroes == 1:
+            t_1 = t
+        if dipole_zeroes == 3:
+            t_2 = t
+    d = new_dipole
 
     # Update time 
     t += TIME_STEP 
     count += 1 
 
 print(f"Done after {count} iterations.") 
+period = t_2 - t_1
+frequency = 1 / period * 10 ** 15
+print(f"Period (fs/cycle): {round(period, 3)}")
+print(f"Frequency (Hz): {round(frequency)}")
 
 # Unpack the records into pandas dataframes 
 x_1_data = pd.DataFrame.from_records(records_1) 
@@ -141,7 +156,6 @@ def plot_time_series(df, y, title, ylabel, fig_num):
     plt.xlabel(TIME_LABEL) 
     plt.ylabel(ylabel) 
     plt.tight_layout() 
-    plt.savefig(f"{fig_num}.png")
     plt.show() 
 
 # Species and their dataframes 
@@ -173,5 +187,4 @@ plt.title("Dipole Moment")
 plt.xlabel(TIME_LABEL) 
 plt.ylabel(r"Dipole Moment (e·pm = $1.602\times 10^{-31}$ C·m)") 
 plt.tight_layout() 
-plt.savefig("dipole.png")
 plt.show() 
